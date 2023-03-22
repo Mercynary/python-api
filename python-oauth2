@@ -1,0 +1,57 @@
+# Import required libraries
+import requests
+import urllib.parse
+import json
+
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
+# Create the session, set the max retries and backoff factor
+session = requests.session()
+retry_strategy = Retry(
+  total=3,
+  backoff_factor=1
+)
+
+# Create the session adapter
+adapter = HTTPAdapter(max_retries=retry_strategy)
+http = requests.Session()
+http.mount("https://", adapter)
+http.mount("http://", adapter)
+
+# Set url for oauth2 authentication
+url = ""
+
+# Ask for client credentials
+client_id = input("Enter username: ")
+client_secret = input("Enter password: ")
+
+# Encode the client credentials into x-www-form-urlencoded format
+client_id_encoded = urllib.parse.quote(client_id)
+client_secret_encoded = urllib.parse.quote(client_secret)
+
+# Set payload, inserting encoded client credentials with an f-string
+payload= f'grant_type=client_credentials&client_id={client_id_encoded}&client_secret={client_secret_encoded}'
+
+# Set headers
+headers = {
+    'Content-Type': 'application/x-www-form-urlencoded'
+}
+
+
+# Return the reponse for the session
+session = requests.request("POST", url, headers=headers, data=payload, timeout=60)
+
+# Put response json text into variable 
+d_session = session.text
+
+# Convert json text into python dictionary using json.loads() method
+d_sessiontext = json.loads(d_session)
+
+# Extract the bearer access_token from the dictionary for future requests
+auth_token = d_sessiontext["access_token"]
+
+# Prints the retrieved bearer token to the console
+print(auth_token)
+
